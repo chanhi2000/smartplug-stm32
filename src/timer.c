@@ -1,6 +1,5 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-#include "error.h"
 
 volatile uint32_t msTicks;					// counts 1ms timeTicks
 
