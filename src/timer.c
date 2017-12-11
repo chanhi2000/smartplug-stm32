@@ -15,6 +15,7 @@ void Delay (uint32_t dlyTicks)
 	while ((msTicks - curTicks) < dlyTicks) 
 	{ 
 		__NOP();
+		__NOP();
 	}
 }
 
