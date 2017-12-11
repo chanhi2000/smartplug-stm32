@@ -4,32 +4,10 @@
 #include "Board_Buttons.h"
 #include "Board_LED.h"
 
-static void SystemClock_Config(void);
+#include "timer.h"
+
 static void Error_Handler(void);
-
-volatile uint32_t msTicks;					// counts 1ms timeTicks
-
-/*----------------------------------------------------------------------------
- *	SysTick_Handler
- *----------------------------------------------------------------------------*/
-void SysTick_Handler(void) 
-{
-	msTicks++;
-}
-
-/*----------------------------------------------------------------------------
- *	delays number of tick Systicks (happens every 10 ms)
- *----------------------------------------------------------------------------*/
-void Delay (uint32_t dlyTicks) 
-{
-	uint32_t curTicks;
-	curTicks = msTicks;
-	while ((msTicks - curTicks) < dlyTicks) 
-	{ 
-		__NOP();
-		__NOP();		
-	}
-}
+static void SystemClock_Config(void);
 
 /**
   * @brief  Main program
@@ -57,12 +35,11 @@ int main(void)
   
 	SysTick_Config(SystemCoreClock / 100);      // SysTick 10 msec interrupts
 	  
-    
 	while (1)
 	{
 		/* Infinite loop */
-		//LED_On(1);		LED_Off(0);		Delay(25);
-		//LED_On(0);		LED_Off(1);		Delay(25);
+		LED_On(1);		LED_Off(0);		Delay(25);
+		LED_On(0);		LED_Off(1);		Delay(25);
 		
 		// LED_On(1);	LED_Off(1);
 		// GPIOG->ODR ^= 0x00004000;
@@ -70,33 +47,14 @@ int main(void)
 		// GPIOG->ODR |= (0x1 << 14);
 		// GPIOG->ODR &= ~(0x1 << 14);
 	
+		/**
 		GPIOG->BSRR = 0x00004000;
 		Delay(1);
 		GPIOG->BSRR = 0x40000000;
 		Delay(1);
+		*/
 	}
 }
-
-/**
-  * @brief  System Clock Configuration
-  *         The system Clock is configured as follow : 
-  *            System Clock source            = PLL (HSE)
-  *            SYSCLK(Hz)                     = 180000000
-  *            HCLK(Hz)                       = 180000000
-  *            AHB Prescaler                  = 1
-  *            APB1 Prescaler                 = 4
-  *            APB2 Prescaler                 = 2
-  *            HSE Frequency(Hz)              = 8000000
-  *            PLL_M                          = 8
-  *            PLL_N                          = 360
-  *            PLL_P                          = 2
-  *            PLL_Q                          = 7
-  *            VDD(V)                         = 3.3
-  *            Main regulator output voltage  = Scale1 mode
-  *            Flash Latency(WS)              = 5
-  * @param  None
-  * @retval None
-  */
 
 static void SystemClock_Config(void)
 {
@@ -141,15 +99,9 @@ static void SystemClock_Config(void)
 	}
 }
 
-/**
-  * @brief  This function is executed in case of error occurrence.
-  * @param  None
-  * @retval None
-  */
 static void Error_Handler(void)
 {
   LED_On(1);		// Turn LED4 on  
   while(1) {}
 }
-
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
