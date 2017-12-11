@@ -4,7 +4,6 @@
 #include "Board_Buttons.h"
 #include "Board_LED.h"
 
-
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 
@@ -27,7 +26,8 @@ void Delay (uint32_t dlyTicks)
 	curTicks = msTicks;
 	while ((msTicks - curTicks) < dlyTicks) 
 	{ 
-		__NOP(); 
+		__NOP();
+		__NOP();		
 	}
 }
 
