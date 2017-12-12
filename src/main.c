@@ -8,6 +8,11 @@
 
 static void Error_Handler(void);
 static void SystemClock_Config(void);
+static void UART4_Init(void);
+
+void _Error_Handler(char * file, int line);
+
+UART_HandleTypeDef huart4;
 
 /**
   * @brief  Main program
@@ -29,6 +34,8 @@ int main(void)
 
 	HAL_Init();
     
+	UART4_Init();
+	
 	LED_Initialize();                           // Configure LED3 and LED4
     
 	SystemClock_Config();                       // Configure the system clock to 180 MHz
@@ -46,7 +53,7 @@ int main(void)
 
 		// GPIOG->ODR |= (0x1 << 14);
 		// GPIOG->ODR &= ~(0x1 << 14);
-	
+		
 		/**
 		GPIOG->BSRR = 0x00004000;
 		Delay(1);
@@ -87,7 +94,9 @@ static void SystemClock_Config(void)
  
 	/*  Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2 
 		clocks dividers */
-	RCC_ClkInitStruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+	RCC_ClkInitStruct.ClockType = (
+		RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2
+	);
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
 	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;  
@@ -104,4 +113,34 @@ static void Error_Handler(void)
   LED_On(1);		// Turn LED4 on  
   while(1) {}
 }
+
+static void UART4_Init(void)
+{
+	huart4.Instance = UART4;
+  huart4.Init.BaudRate = 115200;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
+  {
+    _Error_Handler(__FILE__, __LINE__);
+  }
+}
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @param  None
+  * @retval None
+  */
+void _Error_Handler(char * file, int line)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  while(1) {}
+  /* USER CODE END Error_Handler_Debug */ 
+}
+
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
