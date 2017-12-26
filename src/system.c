@@ -14,13 +14,18 @@
 #include "Board_LED.h"
 #include "system.h"
 
-volatile uint32_t msTicks;							// counts 1ms timeTicks
+
+volatile 						uint32_t msTicks;							// counts 1ms timeTicks
+uint16_t						uwPrescalerValue = 0;
+TIM_HandleTypeDef		TimHandle3;
+TIM_HandleTypeDef		TimHandle4;
+
 
 /**
  *	@brief		This function is executed in case of error occurrence.
  *	@param		None
  *	@retval 	None
-*/
+ */
 void Error_Handler(void)
 {
   LED_On(1);														// Turn LED4 on  
@@ -82,7 +87,6 @@ void SystemClock_Config(void)
 	 */
 	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   
-  
 	// Enable HSE Oscillator and activate PLL with HSE as source
 	RCC_OscInitStruct.OscillatorType 	= RCC_OSCILLATORTYPE_HSE;
 	RCC_OscInitStruct.HSEState 				= RCC_HSE_ON;
@@ -115,4 +119,84 @@ void SystemClock_Config(void)
 	{
 		Error_Handler();
 	}
+}
+
+/**
+  * @brief  This function handles TIM interrupt request.  
+  * @param  htim: 	pointer to a TIM_HandleTypeDef structure that contains
+  *                	the configuration information for TIM module.
+	*	@param  timer:	pointer to a TIM_TypeDef structure that contains 
+	*									the information for TIMx (e.g. TIM3, TIM4)
+	* @param	period:	period value to 
+  * @retval None
+  * @Note   This function needs prescaler value defined in the global scope so it can be applied 
+	*					to other Timer interrupt requests
+  */
+void TIM_Config(TIM_HandleTypeDef *htim, TIM_TypeDef *timer, uint32_t period)
+{
+	htim->Instance 							= timer;
+	htim->Init.Period 					= period - 1;
+	htim->Init.Prescaler 				= uwPrescalerValue;
+	htim->Init.ClockDivision 		= 0;
+	htim->Init.CounterMode 			= TIM_COUNTERMODE_UP;
+	if (HAL_TIM_Base_Init(htim) != HAL_OK) 
+	{
+		Error_Handler();
+	}
+	if(HAL_TIM_Base_Start_IT(htim) != HAL_OK)
+  {
+    Error_Handler();														// Starting Error
+  }
+}
+
+void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
+{
+   if(htim->Instance == TIM3)
+   {
+    /*##-1- Enable peripherals and GPIO Clocks #################################*/
+    /* TIMx Peripheral clock enable */
+    __HAL_RCC_TIM3_CLK_ENABLE();
+
+    /*##-2- Configure the NVIC for TIMx ########################################*/
+    /* Set the TIMx priority */
+    HAL_NVIC_SetPriority(TIM3_IRQn, 0, 1);
+  
+    /* Enable the TIMx global Interrupt */
+    HAL_NVIC_EnableIRQ(TIM3_IRQn);
+   }
+   else if(htim->Instance == TIM4)
+   {
+    /*##-1- Enable peripherals and GPIO Clocks #################################*/
+    /* TIMx Peripheral clock enable */
+    __HAL_RCC_TIM4_CLK_ENABLE();
+
+    /*##-2- Configure the NVIC for TIMx ########################################*/
+    /* Set the TIMx priority */
+    HAL_NVIC_SetPriority(TIM4_IRQn, 0, 2);
+  
+    /* Enable the TIMx global Interrupt */
+    HAL_NVIC_EnableIRQ(TIM4_IRQn);
+   }   
+}
+
+/**
+  * @brief  Period elapsed callback in non-blocking mode
+  * @param  htim: TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if(htim->Instance == TIM3)				GPIOG->ODR ^= (0x01 << 13);
+	else if(htim->Instance == TIM4)		GPIOG->ODR ^= (0x01 << 14);
+}
+
+
+void TIM3_IRQHandler(void)
+{
+  HAL_TIM_IRQHandler(&TimHandle3);
+}
+
+void TIM4_IRQHandler(void)
+{
+  HAL_TIM_IRQHandler(&TimHandle4);
 }

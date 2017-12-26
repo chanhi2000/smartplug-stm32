@@ -1,31 +1,33 @@
+/*-----------------------------------------------------------------------------
+ *      SmartPlug-ARM
+ *-----------------------------------------------------------------------------
+ *      Name:    main.c
+ *      Purpose: main function
+ *---------------------------------------------1--------------------------------
+ *      Copyright (c) 2004-2011 KEIL - An ARM Company. All rights reserved.
+ *----------------------------------------------------------------------------*/
+
 /*----------------------------------------------------------------------------
  *  Includes
  *----------------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 #include "Board_Buttons.h"
 #include "Board_LED.h"
+#include "system.h"
 #include "serial.h"
 #include "cmdline.h"
 #include "cmd_func.h"
-
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
-TIM_HandleTypeDef    TimHandle3;
-TIM_HandleTypeDef    TimHandle4;
-uint16_t uwPrescalerValue = 0;
-
 extern UART_HandleTypeDef UartHandle;
-
-extern void SystemClock_Config(void);
-extern void Error_Handler(void);
 
 void TIM3_Config(void);
 void TIM4_Config(void);
-
+void USART1_IRQHandler(void);
 
 /**
   * @brief  Main program
@@ -68,8 +70,6 @@ int main(void)
    
   //__HAL_UART_ENABLE_IT(&UartHandle, UART_IT_RXNE);
    
-   
-   
    printf("\n\rUART Printf Example: retarget the C library printf function to the UART\n\r");
    printf("SystemCoreClock[%d] \n\r" ,   SystemCoreClock);
    printf("Compile Data[%s] , Time[%s] \n\r" ,   __DATE__,__TIME__);
@@ -77,12 +77,7 @@ int main(void)
   /* Infinite loop */
   while (1)
   {
-      
-    
-            //
-        // Print a prompt to the console.  Show the CWD.
-        //
-        printf("cmd> ");
+		printf("cmd> ");										// Print a prompt to the console.  Show the CWD.
 
         //
         // Get a line of text from the user.
@@ -124,91 +119,6 @@ int main(void)
 }
 
 
-
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
-{
-   
-   if(htim->Instance == TIM3)
-   {
-    /*##-1- Enable peripherals and GPIO Clocks #################################*/
-    /* TIMx Peripheral clock enable */
-    __HAL_RCC_TIM3_CLK_ENABLE();
-
-    /*##-2- Configure the NVIC for TIMx ########################################*/
-    /* Set the TIMx priority */
-    HAL_NVIC_SetPriority(TIM3_IRQn, 0, 1);
-  
-    /* Enable the TIMx global Interrupt */
-    HAL_NVIC_EnableIRQ(TIM3_IRQn);
-   }
-   else if(htim->Instance == TIM4)
-   {
-    /*##-1- Enable peripherals and GPIO Clocks #################################*/
-    /* TIMx Peripheral clock enable */
-    __HAL_RCC_TIM4_CLK_ENABLE();
-
-    /*##-2- Configure the NVIC for TIMx ########################################*/
-    /* Set the TIMx priority */
-    HAL_NVIC_SetPriority(TIM4_IRQn, 0, 2);
-  
-    /* Enable the TIMx global Interrupt */
-    HAL_NVIC_EnableIRQ(TIM4_IRQn);
-   }   
-}
-
-/**
-  * @brief  Period elapsed callback in non blocking mode
-  * @param  htim: TIM handle
-  * @retval None
-  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  if(htim->Instance == TIM3)				GPIOG->ODR ^= (0x01 << 13);
-	else if(htim->Instance == TIM4)		GPIOG->ODR ^= (0x01 << 14);
-}
-
-
-void TIM3_IRQHandler(void)
-{
-  HAL_TIM_IRQHandler(&TimHandle3);
-}
-
-void TIM4_IRQHandler(void)
-{
-  HAL_TIM_IRQHandler(&TimHandle4);
-}
-
-/**
-  * @brief  This function handles TIM interrupt request.  
-  * @param  htim: 	pointer to a TIM_HandleTypeDef structure that contains
-  *                	the configuration information for TIM module.
-	*	@param  timer:	pointer to a TIM_TypeDef structure that contains 
-	*									the information for TIMx (e.g. TIM3, TIM4)
-	* @param	period:	period value to 
-  * @retval None
-  * @Note   This function needs prescaler value defined in the global scope so it can be applied 
-	*					to other Timer interrupt requests
-  */
-void TIM_Config(TIM_HandleTypeDef *htim, TIM_TypeDef *timer, uint32_t period)
-{
-	htim->Instance = timer;
-	
-	htim->Init.Period = period - 1;
-	htim->Init.Prescaler = uwPrescalerValue;
-	htim->Init.ClockDivision = 0;
-	htim->Init.CounterMode = TIM_COUNTERMODE_UP;
-	if (HAL_TIM_Base_Init(htim) != HAL_OK) 
-	{
-		Error_Handler();
-	}
-	
-	if(HAL_TIM_Base_Start_IT(htim) != HAL_OK)
-  {
-    Error_Handler();														// Starting Error
-  }
-}
-
-
 void TIM3_Config(void)
 {
 	TIM_Config(&TimHandle3, TIM3, 10000); 
@@ -246,7 +156,6 @@ void USART1_IRQHandler(void)
    
       LED_On (1);
      }
-
 }
 #endif
 
